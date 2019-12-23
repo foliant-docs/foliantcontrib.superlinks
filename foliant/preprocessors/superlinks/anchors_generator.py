@@ -74,6 +74,31 @@ class Titles:
         self.chapters[str(abs_path)] = title_ids
         extend_anchors(self._accumulated_anchors, basic_anchors)
 
+    def get_id(self,
+               filepath: str or PosixPath,
+               title: str,
+               occurrence: int = 1) -> str:
+        '''
+        Get id for title of the chapter defined by `filepath`. If there are
+        duplicate heading titles in the document, you can pick the specific one
+        by specifying occurence number.
+
+        :param filepath: path to chapter where the title is located
+        :param title: title to get the id of.
+        :param occurence: number of the occurrence to pick.
+
+        :returns: id of the requested title.
+        '''
+
+        abs_path = Path(filepath).resolve()
+        if str(abs_path) not in self.chapters:
+            raise NotAChapterException(f'{filepath} is not a chapter, can\'t process link')
+        chapter_titles = self.chapters[str(abs_path)]
+
+        if title not in chapter_titles:
+            raise TitleNotFoundError(f'Title {title} missing in chapter {filepath}')
+        return chapter_titles[title][occurrence - 1]
+
 
 def get_basic_anchors(filepath: str or PosixPath,
                       backend: str) -> (dict, dict):

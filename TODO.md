@@ -1,5 +1,3 @@
-- if link to file without anchor — convert it to link to first title or add anchor manually (probably to be made on backend level)
-- add proper uniqueness check to anchors and customids
 - aglio first heading has anchor "top"
 - confluence: not finished
 

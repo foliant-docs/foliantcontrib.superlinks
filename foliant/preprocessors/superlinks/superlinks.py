@@ -160,7 +160,7 @@ class Preprocessor(BasePreprocessorExt):
                                      title +
                                      r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
                                      re.MULTILINE)
-        occurence = 0
+        occurence = 1
         for m in pattern.finditer(section.chapter.main_section.get_source(False)):
             if m.start() < start:
                 occurence += 1
