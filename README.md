@@ -49,7 +49,10 @@ To add a link, use a `link` tag with a combination of following parameters:
 :    ID of the meta section which is being referenced. (if `title` is used, then this title MUST be inside this meta section)
 
 `anchor`
-:    Just a hardoded anchor. No magic here.
+:    Name of the anchor defined by [Anchors](../anchors.md) preprocessor or an ID defined by [CustomIDs](../customids.md) preprocessor. If `src` or `meta` is not provided — the id will be searched globally.
+
+`id`
+:    Just a hardcoded id. No magic here.
 
 ## Examples
 
@@ -83,6 +86,18 @@ To add a link, use a `link` tag with a combination of following parameters:
 <link meta_id="SECTION1">Link caption</link>
 ```
 
+**Reference an anchor and search for it globally**
+
+```html
+<link anchor="my_anchor">Link caption</link>
+```
+
+**Reference an anchor and search for it in specific chapter**
+
+```html
+<link src="subfolder/another_chapter.md" anchor="my_anchor">Link caption</link>
+```
+
 ## Supported Backends:
 
 Backend | Support
@@ -92,4 +107,4 @@ pandoc | ✅ YES
 mdtopdf | ✅ YES
 mkdocs | ✅ YES
 slate | ✅ YES
-confluence | ❌ NO
+confluence | ❌ NOt yet

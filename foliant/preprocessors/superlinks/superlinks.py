@@ -16,7 +16,38 @@ from foliant.preprocessors import anchors
 from .anchors_generator import Titles, TitleNotFoundError
 
 
-def construct_link(filepath: str or Path, anchor: str, caption: str = ''):
+class AnchorNotFoundError(Exception):
+    pass
+
+
+def preprocessor_index(config: dict, preprocessor: str) -> int:
+    '''Check if preprocessor is listed in config and return its index or -1'''
+    i = 0
+    for p in config.get('preprocessors', []):
+        if isinstance(p, str):
+            if p == preprocessor:
+                return i
+        elif isinstance(p, dict):
+            if preprocessor in p:
+                return i
+        i += 1
+    else:
+        return -1
+
+
+def confluence_link_to_anchor(anchor: str, caption: str) -> str:
+    '''
+    Temporary function that returns hardcoded link to confluence anchor.
+    When confluence backend support will be fully added, this will be replaced.
+    '''
+    template = '''<raw_confluence><ac:link ac:anchor="{anchor}">
+    <ac:plain-text-link-body><![CDATA[{caption}]]></ac:plain-text-link-body>
+  </ac:link>
+</raw_confluence>'''
+    return template.format(anchor=anchor, caption=caption)
+
+
+def construct_link(filepath: str or Path, anchor: str, caption: str = '') -> str:
     '''
     Construct Mardown link from its components.
 
@@ -55,8 +86,10 @@ class Preprocessor(BasePreprocessorExt):
 
         self.bof_anchors = {}
 
-    def _rel_to_current(self, filepath: str or PosixPath) -> PosixPath:
+    def _rel_to_current(self, filepath: str or PosixPath) -> str or PosixPath:
         '''Get a path relative to current processing file.'''
+        if Path(filepath).resolve() == self.current_filepath.resolve():
+            return ''
         return Path(filepath).relative_to(self.current_filepath.parent)
 
     def _get_bof_anchor(self, filepath: str or PosixPath):
@@ -169,6 +202,45 @@ class Preprocessor(BasePreprocessorExt):
         anchor = self.anchors.get_id(filepath, title, occurence)
         return construct_link(self._rel_to_current(filepath), anchor, caption)
 
+    def _get_link_by_anchor(self,
+                            filename: str or PosixPath,
+                            anchor: str,
+                            caption: str) -> str:
+        '''
+        Search for anchor. If filename is not current path, then search in this
+        file. If it is current path, then search globally.
+
+        :param filename: path to md-file where to look for anchor.
+        :param anchor: anchor to look for.
+        :param caption: caption of the link.
+
+        :returns: constructed link string.
+        '''
+
+        if anchor not in self.applied_anchors:
+            raise AnchorNotFoundError(f'Anchor {anchor} not found in the project')
+
+        # if filename is current file, means that src was not provided. We will
+        # perform global search in this case
+        if filename != self.current_filepath:
+            target_file = Path(filename)
+            for file in self.applied_anchors[anchor]:
+                if file.resolve() == target_file.resolve():
+                    break
+            else:
+                raise AnchorNotFoundError(f'Anchor {anchor} not found in {filename}')
+        else:
+            anchors = self.applied_anchors[anchor]
+            if len(anchors) > 1:
+                self._warning(f'Anchor {anchor} appears several times in project. '
+                              'Picking the first occurrence')
+            target_file = anchors[0]
+        if self.context['backend'] == 'confluence':
+            return confluence_link_to_anchor(anchor, caption)
+        return construct_link(self._rel_to_current(target_file),
+                              anchor,
+                              caption)
+
     @allow_fail()
     def process_links(self, block) -> str:
         '''Process a link tag and replace it with Markdown link to proper anchor'''
@@ -185,10 +257,14 @@ class Preprocessor(BasePreprocessorExt):
             filepath = self.current_filepath
         title = tag_options.get('title')
         anchor = tag_options.get('anchor')
+        id_ = tag_options.get('id')
         self.logger.debug(f'Derrived filepath: {filepath}')
-        if anchor:
-            self.logger.debug(f'Anchor specified, constructing link right away')
-            return construct_link(self._rel_to_current(filepath), anchor, caption)
+        if id_:
+            self.logger.debug(f'ID specified, constructing link right away')
+            return construct_link(self._rel_to_current(filepath), id_, caption)
+        elif 'anchor' in tag_options:
+            self.logger.debug(f'anchor specified, searching for global anchor')
+            return self._get_link_by_anchor(filepath, anchor, caption)
         elif 'meta_id' in tag_options:
             self.logger.debug(f'meta_id specified, looking for title in section')
             return self._get_link_by_meta(tag_options['meta_id'], title, caption)
@@ -246,7 +322,70 @@ class Preprocessor(BasePreprocessorExt):
             with open(filename, 'w') as f:
                 f.write(processed_content)
 
+    def collect_anchors(self):
+        '''
+        Search all md-files in working dir for <anchor> tags and custom_ids and
+        save them into applied_anchors attibute of following structure:
+
+        {anchor_name: [PosixPaths of files where it is mentioned]}
+        '''
+
+        anchor_pattern = re.compile(
+            rf'(?<!\<)\<anchor(\s(?P<options>[^\<\>]*))?\>' +
+            rf'(?P<body>.*?)\<\/anchor\>',
+            flags=re.DOTALL
+        )
+        customid_pattern = re.compile(
+            r'^(?P<hashes>\#{1,6})\s+(?P<title>.+?)\s+'
+            r'(?:\{\#(?P<custom_id>\S+)\})\s*$',
+            re.MULTILINE
+        )
+
+        self.applied_anchors = {}
+        for markdown_file_path in self.working_dir.rglob('*.md'):
+            with open(markdown_file_path) as f:
+                content = f.read()
+                for m in anchor_pattern.finditer(content):
+                    list_ = self.applied_anchors.setdefault(m.group('body'), [])
+                    if markdown_file_path not in list_:
+                        list_.append(markdown_file_path)
+                for m in customid_pattern.finditer(content):
+                    list_ = self.applied_anchors.setdefault(m.group('custom_id'), [])
+                    if markdown_file_path not in list_:
+                        list_.append(markdown_file_path)
+
+    def check_dependencies(self):
+        '''
+        - Check if customids preprocessor is listed after superlinks or raise a
+        warning.
+        - Check if anchors preprocessor is listed after superlinks or raise a
+        warning.
+        - Check if includes preprocessor is listed before superlinks or raise a
+        warning.
+        '''
+        superlinks_index = preprocessor_index(self.config, 'superlinks')
+        custom_ids_index = preprocessor_index(self.config, 'customids')
+        anchors_index = preprocessor_index(self.config, 'anchors')
+        includes_index = preprocessor_index(self.config, 'includes')
+
+        if custom_ids_index != -1:
+            if custom_ids_index < superlinks_index:
+                self._warning('CustomIDs preprocessor should be listed AFTER '
+                              'superlinks in config for magic to work')
+
+        if anchors_index != -1:
+            if anchors_index < superlinks_index:
+                self._warning('Anchors preprocessor should be listed AFTER '
+                              'superlinks in config for global anchor search to work')
+
+        if includes_index != -1:
+            if includes_index > superlinks_index:
+                self._warning('Includes preprocessor should be listed BEFORE '
+                              'superlinks in config, otherwise we do not guarantee anything')
+
     def apply(self):
+        self.check_dependencies()
+        self.collect_anchors()
         self._process_tags_for_all_files(func=self.process_links)
         self._add_bof_anchors()
         self.logger.info('Preprocessor applied')

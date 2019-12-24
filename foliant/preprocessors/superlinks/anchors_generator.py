@@ -70,7 +70,7 @@ class Titles:
         # overwrite customids
         for anchor, titles in custom_ids.items():
             for title in title_ids:
-                self.title_ids[title] = anchor
+                title_ids[title] = anchor
         self.chapters[str(abs_path)] = title_ids
         extend_anchors(self._accumulated_anchors, basic_anchors)
 
