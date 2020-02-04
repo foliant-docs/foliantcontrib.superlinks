@@ -11,7 +11,7 @@ from foliant.preprocessors.utils.preprocessor_ext import (BasePreprocessorExt,
                                                           allow_fail)
 from foliant.preprocessors.utils.combined_options import Options
 
-from foliant.meta_commands.generate.generate import load_meta
+from foliant.meta.generate import load_meta
 from foliant.preprocessors import anchors
 from .anchors_generator import Titles, TitleNotFoundError
 

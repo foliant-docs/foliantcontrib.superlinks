@@ -16,7 +16,7 @@ setup(
     description=SHORT_DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    version='1.0.2',
+    version='1.0.3',
     author='Daniil Minukhin',
     author_email='ddddsa@gmail.com',
     packages=['foliant.preprocessors.superlinks'],
@@ -27,7 +27,7 @@ setup(
         'foliantcontrib.utils.combined_options>=1.0.7',
         'foliantcontrib.utils.preprocessor_ext',
         'foliantcontrib.utils.header_anchors',
-        'foliantcontrib.meta>=1.2.2',
+        'foliantcontrib.meta>=1.3.0',
         'foliantcontrib.anchors>=1.0.4',
     ],
     classifiers=[

@@ -1,3 +1,7 @@
+# 1.0.3
+
+- Support meta 1.3
+
 # 1.0.2
 
 - add dependencies order check
