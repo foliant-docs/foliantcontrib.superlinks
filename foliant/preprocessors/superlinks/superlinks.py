@@ -10,6 +10,7 @@ from pathlib import Path, PosixPath
 from foliant.preprocessors.utils.preprocessor_ext import (BasePreprocessorExt,
                                                           allow_fail)
 from foliant.preprocessors.utils.combined_options import Options
+from foliant.contrib.chapters import Chapters
 
 from foliant.meta.generate import load_meta
 from foliant.preprocessors import anchors
@@ -77,9 +78,9 @@ class Preprocessor(BasePreprocessorExt):
 
         self.logger = self.logger.getChild('superlinks')
         self.logger.debug(f'Preprocessor inited: {self.__dict__}')
-
         self.anchors = Titles(self.context['backend'])
-        for chapter in self.config['chapters']:
+        flat_chapters = Chapters(self.config['chapters']).flat
+        for chapter in flat_chapters:
             self.anchors.add_chapter(self.working_dir / chapter)
 
         self.meta = load_meta(self.config['chapters'], self.working_dir)

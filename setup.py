@@ -29,6 +29,8 @@ setup(
         'foliantcontrib.utils.header_anchors',
         'foliantcontrib.meta>=1.3.0',
         'foliantcontrib.anchors>=1.0.4',
+        'foliantcontrib.anchors>=1.0.4',
+        'foliantcontrib.utils.chapters',
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

@@ -32,6 +32,17 @@ To enable the preprocessor, add `superlink` to `preprocessors` section in the pr
 preprocessors:
     - superlinks
 ```
+**Important:** SuperLinks preprocessor is very sensitive to its position in the preprocessors list. If you are using it in along with [Includes](https://foliant-docs.github.io/docs/preprocessors/includes/), [Anchors](https://foliant-docs.github.io/docs/preprocessors/anchors/) or [CustomIDs](https://foliant-docs.github.io/docs/preprocessors/customids/) preprocessor, the order in which they are mentioned must be following:
+
+```yaml
+preprocessors:
+    - includes   # indludes must be defined BEFORE superlinks in the list
+    - ...
+    - superlinks
+    - ...        # following preprocessors must be defined AFTER superlinks in the list
+    - anchors
+    - customids
+```
 
 The preprocessor has no config options just now. But it has some important tag options.
 

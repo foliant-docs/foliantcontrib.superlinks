@@ -1,3 +1,7 @@
+# 1.0.4
+
+- Fix: bug with chapters
+
 # 1.0.3
 
 - Support meta 1.3

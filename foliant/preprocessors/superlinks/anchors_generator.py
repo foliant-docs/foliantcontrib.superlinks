@@ -89,7 +89,6 @@ class Titles:
 
         :returns: id of the requested title.
         '''
-
         abs_path = Path(filepath).resolve()
         if str(abs_path) not in self.chapters:
             raise NotAChapterException(f'{filepath} is not a chapter, can\'t process link')
