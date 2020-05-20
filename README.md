@@ -1,4 +1,4 @@
-[![](https://img.shields.io/pypi/v/foliantcontrib.superlinks.svg)](https://pypi.org/project/foliantcontrib.superlinks/)
+[![](https://img.shields.io/pypi/v/foliantcontrib.superlinks.svg)](https://pypi.org/project/foliantcontrib.superlinks/)  [![](https://img.shields.io/github/v/tag/foliant-docs/foliantcontrib.superlinks.svg?label=GitHub)](https://github.com/foliant-docs/foliantcontrib.superlinks)
 
 # SuperLinks for Foliant
 
