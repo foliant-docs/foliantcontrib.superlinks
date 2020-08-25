@@ -69,8 +69,8 @@ class Titles:
                                      self.backend)
         # overwrite customids
         for anchor, titles in custom_ids.items():
-            for title in title_ids:
-                title_ids[title] = anchor
+            for title in titles:
+                title_ids[title] = [anchor]
         self.chapters[str(abs_path)] = title_ids
         extend_anchors(self._accumulated_anchors, basic_anchors)
 
@@ -87,7 +87,7 @@ class Titles:
         :param title: title to get the id of.
         :param occurence: number of the occurrence to pick.
 
-        :returns: id of the requested title.
+        :returns: (id of the requested title, pos).
         '''
         abs_path = Path(filepath).resolve()
         if str(abs_path) not in self.chapters:
@@ -125,12 +125,13 @@ def get_basic_anchors(filepath: str or PosixPath,
             custom_id = m.group('custom_id')
             anchor = to_id(title, backend)
             if custom_id:
-                custom_ids.setdefault(custom_id, []).append(title)
+                custom_ids.setdefault(custom_id, []).append((title, m.end()))
                 # customids don't replace title anchor but add a div above
                 # so the heading will still affect dublicate anchor generation
-                basic_ids.setdefault(anchor, []).append(SKIP)
+                # basic_ids.setdefault(anchor, []).append((SKIP, -1))
+                basic_ids.setdefault(anchor, []).append((title, m.end()))
             else:
-                basic_ids.setdefault(anchor, []).append(title)
+                basic_ids.setdefault(anchor, []).append((title, m.end()))
     return basic_ids, custom_ids
 
 
@@ -156,10 +157,13 @@ def finalize_anchors(basic: dict,
         occurence = 0
         for title in titles:
             occurence += 1
-            if title == SKIP:
+            if title[0] == SKIP:
                 continue  # custom_id title
             accum_count = len(accumulated.get(anchor, []))
-            result.setdefault(title, []).append(make_unique(anchor,
-                                                            occurence + accum_count,
-                                                            backend))
+            result.setdefault(title[0], []).append(
+                (
+                    make_unique(anchor, occurence + accum_count, backend),
+                    title[1]
+                )
+            )
     return result

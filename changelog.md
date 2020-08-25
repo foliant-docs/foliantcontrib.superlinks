@@ -1,3 +1,9 @@
+# 1.0.5
+
+- New: added Confluence backend support
+- Fix: links were corrupted when customids were used
+- Fix: several other bug fixes and optimizations
+
 # 1.0.4
 
 - Fix: bug with chapters

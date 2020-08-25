@@ -15,6 +15,7 @@ from foliant.contrib.chapters import Chapters
 from foliant.meta.generate import load_meta
 from foliant.preprocessors import anchors
 from .anchors_generator import Titles, TitleNotFoundError
+from .confluence import gen_link, construct_confluence_link
 
 
 class AnchorNotFoundError(Exception):
@@ -36,35 +37,12 @@ def preprocessor_index(config: dict, preprocessor: str) -> int:
         return -1
 
 
-def confluence_link_to_anchor(anchor: str, caption: str) -> str:
-    '''
-    Temporary function that returns hardcoded link to confluence anchor.
-    When confluence backend support will be fully added, this will be replaced.
-    '''
-    template = '''<raw_confluence><ac:link ac:anchor="{anchor}">
-    <ac:plain-text-link-body><![CDATA[{caption}]]></ac:plain-text-link-body>
-  </ac:link>
-</raw_confluence>'''
-    return template.format(anchor=anchor, caption=caption)
-
-
-def construct_link(filepath: str or Path, anchor: str, caption: str = '') -> str:
-    '''
-    Construct Mardown link from its components.
-
-    :param filepath: path to file which is being referenced (relative to
-                     current md-file!)
-    :param anchor:   anchor to id on the page.
-    :param caption:  link caption.
-
-    :returns: string with constructed Markdown link.
-
-    '''
-    processed_anchor = anchor[1:] if anchor.startswith('#') else anchor
-    if processed_anchor:
-        processed_anchor = '#' + processed_anchor
-    link_template = f'[{caption}]({filepath}#{anchor})'
-    return link_template
+def rel_path(filepath: str or PosixPath,
+             rel_to: str or PosixPath) -> PosixPath:
+    '''Get a path relative to `rel_to` file.'''
+    if Path(filepath).resolve() == Path(rel_to).resolve():
+        return ''
+    return Path(filepath).relative_to(Path(rel_to).parent)
 
 
 class Preprocessor(BasePreprocessorExt):
@@ -83,15 +61,33 @@ class Preprocessor(BasePreprocessorExt):
         for chapter in flat_chapters:
             self.anchors.add_chapter(self.working_dir / chapter)
 
+        self.logger.debug(f'Generated anchors:\n{self.anchors.chapters}')
         self.meta = load_meta(self.config['chapters'], self.working_dir)
 
         self.bof_anchors = {}
 
-    def _rel_to_current(self, filepath: str or PosixPath) -> str or PosixPath:
-        '''Get a path relative to current processing file.'''
-        if Path(filepath).resolve() == self.current_filepath.resolve():
-            return ''
-        return Path(filepath).relative_to(self.current_filepath.parent)
+    def _construct_link(self,
+                        filepath: str or PosixPath,
+                        anchor: str,
+                        caption: str = '') -> str:
+        '''
+        Construct Markdown link from its components.
+
+        :param filepath: path to file which is being referenced
+        :param cur_file: path to current processed file
+        :param anchor:   anchor to id on the page.
+        :param caption:  link caption.
+
+        :returns: string with constructed Markdown link.
+
+        '''
+        target_file = rel_path(filepath, self.current_filepath)
+        processed_anchor = anchor[1:] if anchor.startswith('#') else anchor
+
+        if processed_anchor:
+            processed_anchor = '#' + processed_anchor
+        link_template = f'[{caption}]({target_file}#{anchor})'
+        return link_template
 
     def _get_bof_anchor(self, filepath: str or PosixPath):
         '''
@@ -121,9 +117,15 @@ class Preprocessor(BasePreprocessorExt):
 
         :returns: string with Markdown link to needed title.
         '''
+        anchor, pos = self.anchors.get_id(filepath, title)
 
-        anchor = self.anchors.get_id(filepath, title)
-        return construct_link(self._rel_to_current(filepath), anchor, caption)
+        if self.context['backend'] == 'confluence':
+            return construct_confluence_link(caption,
+                                             pos=pos,
+                                             filepath=filepath,
+                                             anchor=anchor)
+        else:
+            return self._construct_link(filepath, anchor, caption)
 
     def _get_link_to_bof(self,
                          filepath: str or PosixPath,
@@ -139,7 +141,13 @@ class Preprocessor(BasePreprocessorExt):
         :returns: string with Markdown link to the beginning of the file.
         '''
         anchor = self._get_bof_anchor(filepath)
-        return construct_link(self._rel_to_current(filepath), anchor, caption)
+        if self.context['backend'] == 'confluence':
+            return construct_confluence_link(caption,
+                                             pos=0,
+                                             filepath=filepath,
+                                             anchor=anchor)
+        else:
+            return self._construct_link(filepath, anchor, caption)
 
     def _get_link_by_meta(self,
                           meta_id: str,
@@ -168,10 +176,10 @@ class Preprocessor(BasePreprocessorExt):
         filepath = section.chapter.filename
         section_source = section.get_source(False)
         if title:
-            pattern = re.compile(r'^\#{1,6}\s+' +
-                                 title +
-                                 r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
-                                 re.MULTILINE)
+            pattern = re.compile(
+                r'^\#{1,6}\s+' + title + r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
+                re.MULTILINE
+            )
             match = pattern.search(section_source)
             if match is None:
                 raise TitleNotFoundError(f'Title "{title}" not found in meta section with id {meta_id}')
@@ -183,33 +191,39 @@ class Preprocessor(BasePreprocessorExt):
                 return self._get_link_to_bof(filepath, caption)
             else:
                 # all subsections start with a title, so we can determine it
-                title_pattern = re.compile(r'^\#{1,6}\s+' +
-                                           r'(?P<title>.+?)' +
-                                           r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
-                                           re.MULTILINE)
+                title_pattern = re.compile(
+                    r'^\#{1,6}\s+(?P<title>.+?)\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
+                    re.MULTILINE
+                )
                 title_match = title_pattern.search(section_source)
                 title = title_match.group('title')
                 start = section.start + title_match.start()
-                pattern = re.compile(r'^\#{1,6}\s+' +
-                                     title +
-                                     r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
-                                     re.MULTILINE)
+                pattern = re.compile(
+                    r'^\#{1,6}\s+' + title + r'\s+(?:\{\#(?P<custom_id>\S+)\})?\s*$',
+                    re.MULTILINE
+                )
         occurence = 1
         for m in pattern.finditer(section.chapter.main_section.get_source(False)):
             if m.start() < start:
                 occurence += 1
             else:
                 break
-        anchor = self.anchors.get_id(filepath, title, occurence)
-        return construct_link(self._rel_to_current(filepath), anchor, caption)
+        anchor, pos = self.anchors.get_id(filepath, title, occurence)
+        if self.context['backend'] == 'confluence':
+            return construct_confluence_link(caption,
+                                             pos=pos,
+                                             filepath=filepath,
+                                             anchor=anchor)
+        else:
+            return self._construct_link(filepath, anchor, caption)
 
     def _get_link_by_anchor(self,
                             filename: str or PosixPath,
                             anchor: str,
                             caption: str) -> str:
         '''
-        Search for anchor. If filename is not current path, then search in this
-        file. If it is current path, then search globally.
+        Search for anchor. If filename is not current path, then search in
+        `filename` file. If it is current path, then search globally.
 
         :param filename: path to md-file where to look for anchor.
         :param anchor: anchor to look for.
@@ -225,7 +239,7 @@ class Preprocessor(BasePreprocessorExt):
         # perform global search in this case
         if filename != self.current_filepath:
             target_file = Path(filename)
-            for file in self.applied_anchors[anchor]:
+            for file, pos in self.applied_anchors[anchor]:
                 if file.resolve() == target_file.resolve():
                     break
             else:
@@ -235,12 +249,13 @@ class Preprocessor(BasePreprocessorExt):
             if len(anchors) > 1:
                 self._warning(f'Anchor {anchor} appears several times in project. '
                               'Picking the first occurrence')
-            target_file = anchors[0]
+            target_file, pos = anchors[0]
         if self.context['backend'] == 'confluence':
-            return confluence_link_to_anchor(anchor, caption)
-        return construct_link(self._rel_to_current(target_file),
-                              anchor,
-                              caption)
+            return construct_confluence_link(caption,
+                                             pos=pos,
+                                             filepath=target_file,
+                                             anchor=anchor)
+        return self._construct_link(target_file, anchor, caption)
 
     @allow_fail()
     def process_links(self, block) -> str:
@@ -262,7 +277,10 @@ class Preprocessor(BasePreprocessorExt):
         self.logger.debug(f'Derrived filepath: {filepath}')
         if id_:
             self.logger.debug(f'ID specified, constructing link right away')
-            return construct_link(self._rel_to_current(filepath), id_, caption)
+            if self.context['backend'] == 'confluence':
+                return gen_link(caption, anchor=id_)
+            else:
+                return self._construct_link(filepath, id_, caption)
         elif 'anchor' in tag_options:
             self.logger.debug(f'anchor specified, searching for global anchor')
             return self._get_link_by_anchor(filepath, anchor, caption)
@@ -328,11 +346,18 @@ class Preprocessor(BasePreprocessorExt):
         Search all md-files in working dir for <anchor> tags and custom_ids and
         save them into applied_anchors attibute of following structure:
 
-        {anchor_name: [PosixPaths of files where it is mentioned]}
+        {
+            'anchor_name': [
+                (
+                    PosixPath of file where it is mentioned,
+                    pos[int] of the anchor
+                ), ...
+            ]
+        }
         '''
 
         anchor_pattern = re.compile(
-            rf'(?<!\<)\<anchor(\s(?P<options>[^\<\>]*))?\>' +
+            rf'(?<!\<)\<anchor(\s(?P<options>[^\<\>]*))?\>'
             rf'(?P<body>.*?)\<\/anchor\>',
             flags=re.DOTALL
         )
@@ -348,12 +373,13 @@ class Preprocessor(BasePreprocessorExt):
                 content = f.read()
                 for m in anchor_pattern.finditer(content):
                     list_ = self.applied_anchors.setdefault(m.group('body'), [])
-                    if markdown_file_path not in list_:
-                        list_.append(markdown_file_path)
+                    # if markdown_file_path not in list_:
+                    list_.append((markdown_file_path, m.start()))
                 for m in customid_pattern.finditer(content):
                     list_ = self.applied_anchors.setdefault(m.group('custom_id'), [])
-                    if markdown_file_path not in list_:
-                        list_.append(markdown_file_path)
+                    # if markdown_file_path not in list_:
+                    list_.append((markdown_file_path, m.start()))
+        self.logger.debug(f'Applied anchors dict:\n\n{self.applied_anchors}')
 
     def check_dependencies(self):
         '''
@@ -387,6 +413,6 @@ class Preprocessor(BasePreprocessorExt):
     def apply(self):
         self.check_dependencies()
         self.collect_anchors()
-        self._process_tags_for_all_files(func=self.process_links)
+        self._process_tags_for_all_files(func=self.process_links, buffer=True)
         self._add_bof_anchors()
         self.logger.info('Preprocessor applied')

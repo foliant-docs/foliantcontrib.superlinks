@@ -25,7 +25,7 @@ setup(
     install_requires=[
         'foliant>=1.0.8',
         'foliantcontrib.utils.combined_options>=1.0.7',
-        'foliantcontrib.utils.preprocessor_ext',
+        'foliantcontrib.utils.preprocessor_ext>=1.0.4',
         'foliantcontrib.utils.header_anchors',
         'foliantcontrib.meta>=1.3.0',
         'foliantcontrib.anchors>=1.0.4',

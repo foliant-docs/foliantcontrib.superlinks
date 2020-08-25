@@ -1,9 +1,4 @@
 - aglio first heading has anchor "top"
-- confluence: not finished
-* - links to global ids (customids, anchors)
-* - confluence links to anchors
-* - write in readme about preprocessors order: includes should be placed BEFORE superlinks, customids — AFTER.
-- write about param priority in readme?
 - same file two times in chapters — metadata crashes!!
 
 known issues:

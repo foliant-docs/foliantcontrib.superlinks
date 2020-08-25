@@ -118,4 +118,4 @@ pandoc | ✅ YES
 mdtopdf | ✅ YES
 mkdocs | ✅ YES
 slate | ✅ YES
-confluence | ❌ NOt yet
+confluence | ✅ YES
