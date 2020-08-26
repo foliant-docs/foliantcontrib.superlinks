@@ -123,7 +123,8 @@ class Preprocessor(BasePreprocessorExt):
             return construct_confluence_link(caption,
                                              pos=pos,
                                              filepath=filepath,
-                                             anchor=anchor)
+                                             anchor=anchor,
+                                             context=self.context)
         else:
             return self._construct_link(filepath, anchor, caption)
 
@@ -145,7 +146,8 @@ class Preprocessor(BasePreprocessorExt):
             return construct_confluence_link(caption,
                                              pos=0,
                                              filepath=filepath,
-                                             anchor=anchor)
+                                             anchor=anchor,
+                                             context=self.context)
         else:
             return self._construct_link(filepath, anchor, caption)
 
@@ -213,7 +215,8 @@ class Preprocessor(BasePreprocessorExt):
             return construct_confluence_link(caption,
                                              pos=pos,
                                              filepath=filepath,
-                                             anchor=anchor)
+                                             anchor=anchor,
+                                             context=self.context)
         else:
             return self._construct_link(filepath, anchor, caption)
 
@@ -254,7 +257,8 @@ class Preprocessor(BasePreprocessorExt):
             return construct_confluence_link(caption,
                                              pos=pos,
                                              filepath=target_file,
-                                             anchor=anchor)
+                                             anchor=anchor,
+                                             context=self.context)
         return self._construct_link(target_file, anchor, caption)
 
     @allow_fail()

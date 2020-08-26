@@ -1,24 +1,28 @@
+# 1.0.6
+
+- Improved Confluence links: if section is not uploaded to Confluence, reference to overall project (if it is uploaded to Confluence).
+
 # 1.0.5
 
-- New: added Confluence backend support
-- Fix: links were corrupted when customids were used
-- Fix: several other bug fixes and optimizations
+- New: added Confluence backend support.
+- Fix: links were corrupted when customids were used.
+- Fix: several other bug fixes and optimizations.
 
 # 1.0.4
 
-- Fix: bug with chapters
+- Fix: bug with chapters.
 
 # 1.0.3
 
-- Support meta 1.3
+- Support meta 1.3.
 
 # 1.0.2
 
-- add dependencies order check
+- add dependencies order check.
 - rename anchor parameter to id.
 - add anchor parameter for possibly global anchor search.
 - link to anchors in Confluence are now partly supported.
 
 # 1.0.1
 
-- Initial release
+- Initial release.
