@@ -1,3 +1,12 @@
+# 1.0.7
+
+- If tag body it empty, superlinks will try to guess the right caption of the link:
+    - referenced title for links by title,
+    - meta section title for links by meta section,
+    - heading title for links by CustomIDs,
+    - title from config or first heading title in the file for links to file,
+    - anchor name for links by anchors.
+
 # 1.0.6
 
 - Improved Confluence links: if section is not uploaded to Confluence, reference to overall project (if it is uploaded to Confluence).

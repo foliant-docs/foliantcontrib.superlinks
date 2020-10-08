@@ -65,6 +65,14 @@ To add a link, use a `link` tag with a combination of following parameters:
 `id`
 :    Just a hardcoded id. No magic here.
 
+The body of the `link` tag is your link caption. If the body is empty, SuperLinks will try to guess the right caption:
+
+- referenced title for links by title,
+- meta section title for links by meta section,
+- heading title for links by CustomIDs,
+- title from config or first heading title in the file for links to file,
+- anchor name for links by anchors.
+
 ## Examples
 
 **Reference a title in the same document**
