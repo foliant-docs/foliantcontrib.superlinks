@@ -1,3 +1,9 @@
+# 1.0.8
+
+- Fix: proper relative path generation for links.
+- Fix: multiple issues when !path modifier is used in the link tag.
+- BOF anchors now won't be added for mkdocs backend.
+
 # 1.0.7
 
 - If tag body it empty, superlinks will try to guess the right caption of the link:
