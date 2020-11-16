@@ -30,6 +30,7 @@ setup(
         'foliantcontrib.meta>=1.3.0',
         'foliantcontrib.anchors>=1.0.4',
         'foliantcontrib.utils.chapters>=1.0.4',
+        'foliantcontrib.utils>=1.0.0',
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

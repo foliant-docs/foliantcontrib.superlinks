@@ -12,6 +12,7 @@ from foliant.preprocessors.utils.preprocessor_ext import (BasePreprocessorExt,
                                                           allow_fail)
 from foliant.preprocessors.utils.combined_options import Options
 from foliant.contrib.chapters import Chapters, ChapterNotFoundError
+from foliant.contrib.utils import prepend_file
 
 from foliant.meta.generate import load_meta
 from foliant.preprocessors import anchors
@@ -386,24 +387,8 @@ class Preprocessor(BasePreprocessorExt):
         anchors_preprocessor.header_anchors = []
 
         for filename, anchor in self.bof_anchors.items():
-            with open(filename) as f:
-                content = f.read()
-
-            start = 0
-
-            if content.startswith('---\n'):
-                # file starts with yfm, have to insert anchor after it
-                yfm_end = content.find('\n---\n', 1)
-                start = yfm_end + len('\n---\n') if yfm_end != -1 else 0
-            elif content.startswith('#'):
-                # file starts with title, better insert anchor after it
-                start = content.find('\n', 1)
-
             anchor_str = anchors_preprocessor.process_anchors(f'\n\n<anchor>{anchor}</anchor>\n\n')
-            processed_content = content[:start] + anchor_str + content[start:]
-
-            with open(filename, 'w') as f:
-                f.write(processed_content)
+            prepend_file(filename, anchor_str, before_yfm=False, before_heading=False)
 
     def collect_anchors(self):
         '''
