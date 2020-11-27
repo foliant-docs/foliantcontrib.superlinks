@@ -64,14 +64,11 @@ def rel_path(filepath: str or PosixPath,
     source = Path(rel_to).resolve()
     if target == source:
         return ''
-    # if target.is_absolute():
-    common = os.path.commonprefix([target, source.parent])
+
+    common = os.path.commonpath([target, source.parent])
     depth = len(source.relative_to(common).parent.parts)
     levelup = os.path.join(*['..'] * depth) if depth else '.'
     return levelup / target.relative_to(common)
-    # else:
-        # return target
-    # return Path(filepath).relative_to(Path(rel_to).parent)
 
 
 def get_first_heading(filepath: str or PosixPath) -> str:
@@ -387,7 +384,8 @@ class Preprocessor(BasePreprocessorExt):
         anchors_preprocessor.header_anchors = []
 
         for filename, anchor in self.bof_anchors.items():
-            anchor_str = anchors_preprocessor.process_anchors(f'\n\n<anchor>{anchor}</anchor>\n\n')
+            # TODO: {} or not {}
+            anchor_str = anchors_preprocessor.process_anchors(f'\n\n<anchor>{anchor}</anchor>\n\n', {})
             prepend_file(filename, anchor_str, before_yfm=False, before_heading=False)
 
     def collect_anchors(self):

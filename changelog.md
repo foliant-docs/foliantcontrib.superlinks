@@ -1,3 +1,8 @@
+# 1.0.9
+
+- Fix: BOF anchors bug
+- Fix: common paths processing
+
 # 1.0.8
 
 - Fix: proper relative path generation for links.
