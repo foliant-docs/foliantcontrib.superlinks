@@ -16,7 +16,7 @@ setup(
     description=SHORT_DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    version='1.0.9',
+    version='1.0.10',
     author='Daniil Minukhin',
     author_email='ddddsa@gmail.com',
     packages=['foliant.preprocessors.superlinks'],
@@ -24,13 +24,9 @@ setup(
     platforms='any',
     install_requires=[
         'foliant>=1.0.8',
-        'foliantcontrib.utils.combined_options>=1.0.7',
-        'foliantcontrib.utils.preprocessor_ext>=1.0.4',
-        'foliantcontrib.utils.header_anchors',
         'foliantcontrib.meta>=1.3.0',
         'foliantcontrib.anchors>=1.0.4',
-        'foliantcontrib.utils.chapters>=1.0.4',
-        'foliantcontrib.utils>=1.0.0',
+        'foliantcontrib.utils>=1.0.2',
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

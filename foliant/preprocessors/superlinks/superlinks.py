@@ -10,7 +10,7 @@ from pathlib import Path, PosixPath
 
 from foliant.preprocessors.utils.preprocessor_ext import (BasePreprocessorExt,
                                                           allow_fail)
-from foliant.preprocessors.utils.combined_options import Options
+from foliant.contrib.combined_options import Options
 from foliant.contrib.chapters import Chapters, ChapterNotFoundError
 from foliant.contrib.utils import prepend_file
 
