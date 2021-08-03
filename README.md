@@ -60,7 +60,7 @@ To add a link, use a `link` tag with a combination of following parameters:
 :    ID of the meta section which is being referenced. (if `title` is used, then this title MUST be inside this meta section)
 
 `anchor`
-:    Name of the anchor defined by [Anchors](../anchors.md) preprocessor or an ID defined by [CustomIDs](../customids.md) preprocessor. If `src` or `meta` is not provided — the id will be searched globally.
+:    Name of the anchor defined by [Anchors](https://foliant-docs.github.io/docs/preprocessors/anchors/) preprocessor or an ID defined by [CustomIDs](https://foliant-docs.github.io/docs/preprocessors/customids/) preprocessor. If `src` or `meta` is not provided — the id will be searched globally.
 
 `id`
 :    Just a hardcoded id. No magic here.
