@@ -1,3 +1,7 @@
+# 1.0.11
+
+- Fix imports.
+
 # 1.0.10
 
 - New utils module.

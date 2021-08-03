@@ -1,8 +1,10 @@
 import re
 
-from pathlib import Path, PosixPath
+from pathlib import Path
+from pathlib import PosixPath
 
-from foliant.preprocessors.utils.header_anchors import to_id, make_unique
+from foliant.contrib.header_anchors import make_unique
+from foliant.contrib.header_anchors import to_id
 
 SKIP = '{#_}'
 
