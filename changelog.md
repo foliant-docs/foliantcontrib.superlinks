@@ -1,3 +1,7 @@
+# 1.0.12
+
+- Anchors added to beginning of files are not random anymore.
+
 # 1.0.11
 
 - Fix imports.

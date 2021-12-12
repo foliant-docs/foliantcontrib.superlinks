@@ -3,10 +3,10 @@ Preprocessor for Foliant documentation authoring tool.
 Generates documentation from RAML spec file.
 '''
 import re
-import random
 import os
 
 from pathlib import Path, PosixPath
+from hashlib import md5
 
 from foliant.preprocessors.utils.preprocessor_ext import (BasePreprocessorExt,
                                                           allow_fail)
@@ -140,8 +140,15 @@ class Preprocessor(BasePreprocessorExt):
         :returns: unique id of the anchor at the beginning of the file.
         '''
 
-        abs_path = str(Path(filepath).resolve())
-        return self.bof_anchors.setdefault(abs_path, hex(random.getrandbits(64))[2:-1])
+        abs_path = Path(filepath).resolve()
+        key = str(abs_path)
+        if key in self.bof_anchors:
+            return self.bof_anchors[key]
+
+        rel_path = str(abs_path.relative_to(self.working_dir.resolve()))
+        file_hash = md5(rel_path.encode()).hexdigest()[:8]
+        self.bof_anchors[key] = file_hash
+        return file_hash
 
     def _get_link_by_title(self,
                            filepath: str or PosixPath,
@@ -361,7 +368,7 @@ class Preprocessor(BasePreprocessorExt):
         Add anchors to the beginning of all files which are referenced without
         anchors.
 
-        The IDs for these anchors are generated randomly and are quite unique.
+        The IDs for these anchors are generated from the filename and are quite unique.
 
         Preprocessor foliantcontrib.anchors is used to generate the anchor element.
         '''
